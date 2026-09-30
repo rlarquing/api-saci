@@ -1,0 +1,18 @@
+# Plantillas de correo (necesarias en runtime)
+# Se copian explícitamente en el Dockerfile, pero las excluimos
+# del contexto de build para acelerar si no se necesitan en la etapa de compilación
+
+node_modules
+dist
+npm-debug.log*
+.git
+.gitignore
+.env
+.env.*
+!.env.local
+README.md
+docs
+help
+test
+.vercel
+vercel.json

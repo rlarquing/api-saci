@@ -1,0 +1,17 @@
+export { GenericEntity } from './generic.entity';
+export { MenuEntity } from './menu.entity';
+export { EndPointEntity } from './end-point.entity';
+export { FuncionEntity } from './funcion.entity';
+export { GenericNomencladorEntity } from './generic-nomenclador.entity';
+export { UserEntity } from './user.entity';
+export { RolEntity } from './rol.entity';
+export { LogHistoryEntity } from './log-history.entity';
+export { AlmacenEntity } from './almacen.entity';
+export { CategoriaEntity } from './categoria.entity';
+export { UnidadEntity } from './unidad.entity';
+export { UbicacionEntity } from './ubicacion.entity';
+export { ProductoEntity } from './producto.entity';
+export { RegistroDiarioEntity } from './registro-diario.entity';
+export { MovimientoInventarioEntity } from './movimiento-inventario.entity';
+export { TipoMovimiento } from './movimiento-inventario.entity';
+export { QrEntity } from './qr.entity';

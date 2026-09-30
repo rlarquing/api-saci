@@ -1,0 +1,12 @@
+export { GenericRepository } from './generic.repository';
+export { MenuRepository } from './menu.repository';
+export { EndPointRepository } from './end-point.repository';
+export { FuncionRepository } from './funcion.repository';
+export { GenericNomencladorRepository } from './generic-nomenclador.repository';
+export { RolRepository } from './rol.repository';
+export { LogHistoryRepository } from './log-history.repository';
+export { UserRepository } from './user.repository';
+export { RegistroDiarioRepository } from './registro-diario.repository';
+export { MovimientoInventarioRepository } from './movimiento-inventario.repository';
+export { ProductoRepository } from './producto.repository';
+export { QrRepository } from './qr.repository';

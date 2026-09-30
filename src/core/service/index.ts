@@ -1,0 +1,17 @@
+export { GenericService } from './generic.service';
+export { GenericNomencladorService } from './generic-nomenclador.service';
+export { SocketService } from './socket.service';
+export { AuthService } from './auth.service';
+export { EndPointService } from './end-point.service';
+export { FuncionService } from './funcion.service';
+export { MenuService } from './menu.service';
+export { RolService } from './rol.service';
+export { LogHistoryService } from './log-history.service';
+export { UserService } from './user.service';
+export { MovimientoInventarioService } from './movimiento-inventario.service';
+export { ProductoService } from './producto.service';
+export { RegistroDiarioService } from './registro-diario.service';
+export { QrService } from './qr.service';
+export { BiService } from './bi.service';
+export { SyncService } from './sync.service';
+export { SyncRelationService } from './sync-relation.service';

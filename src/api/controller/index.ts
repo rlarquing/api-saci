@@ -1,0 +1,17 @@
+export { GenericController } from './generic.controller';
+export { AuthController } from './auth.controller';
+export { EndPointController } from './end-point.controller';
+export { FuncionController } from './funcion.controller';
+export { GenericNomencladorController } from './generic-nomenclador.controller';
+export { MenuController } from './menu.controller';
+export { RolController } from './rol.controller';
+export { LogHistoryController } from './log-history.controller';
+export { UserController } from './user.controller';
+export { GenericImportacionController } from './generic-importacion.controller';
+export { MovimientoInventarioController } from './movimiento-inventario.controller';
+export { ProductoController } from './producto.controller';
+export { RegistroDiarioController } from './registro-diario.controller';
+export { QrController } from './qr.controller';
+export { BiController } from './bi.controller';
+export { SyncController } from './sync.controller';
+export { HealthController } from './health.controller';

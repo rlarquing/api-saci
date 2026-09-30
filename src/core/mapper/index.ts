@@ -1,0 +1,11 @@
+export { EndPointMapper } from './end-point.mapper';
+export { FuncionMapper } from './funcion.mapper';
+export { GenericNomencladorMapper } from './generic-nomenclador.mapper';
+export { MenuMapper } from './menu.mapper';
+export { RolMapper } from './rol.mapper';
+export { LogHistoryMapper } from './log-history.mapper';
+export { UserMapper } from './user.mapper';
+export { MovimientoInventarioMapper } from './movimiento-inventario.mapper';
+export { ProductoMapper } from './producto.mapper';
+export { RegistroDiarioMapper } from './registro-diario.mapper';
+export { QrMapper } from './qr.mapper';
