@@ -16,6 +16,7 @@ import {
   HealthController,
   ConteoInventarioController,
   FotoPublicaController,
+  NivelStockController,
 } from './controller';
 
 export const controller = [
@@ -36,4 +37,5 @@ export const controller = [
   HealthController,
   ConteoInventarioController,
   FotoPublicaController,
+  NivelStockController,
 ];

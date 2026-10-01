@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MongoRepository } from 'typeorm';
+import { FindManyOptions, MongoRepository } from 'typeorm';
 import { MovimientoInventarioEntity, TipoMovimiento } from '../entity';
 import { GenericRepository } from './generic.repository';
 import { IRepository } from '../../shared/interface';
+import {
+  Pagination,
+  PaginationOptions,
+  paginateMongo,
+} from '../../shared/pagination';
 
 const SALIDAS = [TipoMovimiento.SALIDA];
 const ENTRADAS = [TipoMovimiento.ENTRADA];
@@ -151,5 +156,28 @@ export class MovimientoInventarioRepository
       order: { fecha: 'DESC' as any },
       take: max,
     });
+  }
+
+  /**
+   * Kardex paginado con filtros por producto y/o almacén (timeline — P2).
+   * Los índices de productoId y fecha ya existen en la colección.
+   */
+  async listarFiltrado(
+    options: PaginationOptions,
+    productoId?: string,
+    almacenId?: string,
+  ): Promise<Pagination<MovimientoInventarioEntity>> {
+    const where: Record<string, unknown> = { activo: true };
+    if (productoId) where.productoId = productoId;
+    if (almacenId) where.almacenId = almacenId;
+
+    return await paginateMongo<MovimientoInventarioEntity>(
+      this.repository,
+      options,
+      {
+        where: where as any,
+        order: { fecha: 'DESC' as any },
+      },
+    );
   }
 }

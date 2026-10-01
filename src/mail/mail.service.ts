@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
+import { Injectable } from '@nestjs/common';
 import { UserEntity } from '../persistence/entity';
 
 @Injectable()
@@ -17,6 +17,15 @@ export class MailService {
         name: user.email,
         code: user.resetPasswordCode,
       },
+    });
+  }
+
+  /** Envío genérico HTML (digerido de stock del digest — backlog P2). */
+  async sendHtml(to: string[], subject: string, html: string): Promise<void> {
+    await this.mailerService.sendMail({
+      to: to.join(', '),
+      subject,
+      html,
     });
   }
 }

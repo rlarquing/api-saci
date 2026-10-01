@@ -75,3 +75,5 @@ export { ProductoSyncDto } from './producto-sync.dto';
 export { StockSyncDto } from './stock-sync.dto';
 export { CreateConteoDto, ConteoLineaDto, ReadConteoDto } from './conteo-inventario.dto';
 export { FotoProductoDto } from './create-producto.dto';
+export { CreateNivelStockDto, UpdateNivelStockDto, ReadNivelStockDto } from './nivel-stock.dto';
+export { NivelStockSyncDto, NotificacionPayload } from './nivel-stock-sync.dto';

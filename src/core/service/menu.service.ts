@@ -336,6 +336,13 @@ export class MenuService extends GenericService<MenuEntity> {
         ],
       },
       {
+        label: 'Niveles',
+        icon: 'tune',
+        to: '/admin/niveles',
+        controller: 'nivel-stock',
+        roles: [RolType.ADMINISTRADOR, RolType.JEFE_DE_ALMACEN],
+      },
+      {
         label: 'Etiquetas QR',
         icon: 'qr_code_2',
         to: '/admin/qr',

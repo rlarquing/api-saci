@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MovimientoInventarioService } from './movimiento-inventario.service';
 import { GenericNomencladorService } from './generic-nomenclador.service';
+import { NivelStockRepository } from '../../persistence/repository';
 import { ProductoRepository, MovimientoInventarioRepository } from '../../persistence/repository';
 import { ProductoEntity, UserEntity } from '../../persistence/entity';
 import {
@@ -10,6 +11,7 @@ import {
   ProductoSyncDto,
   StockSyncDto,
   CategoriaSyncDto,
+  NivelStockSyncDto,
 } from '../../shared/dto';
 import { NomencladorTypeEnum } from '../../shared/enum';
 
@@ -28,6 +30,7 @@ export class SyncService {
     protected genericNomencladorService: GenericNomencladorService,
     protected productoRepository: ProductoRepository,
     protected movimientoInventarioRepository: MovimientoInventarioRepository,
+    protected nivelStockRepository: NivelStockRepository,
   ) {}
 
   async sincronizar(
@@ -64,7 +67,7 @@ export class SyncService {
       }
     }
 
-    const { productos, stock, categorias } =
+    const { productos, stock, categorias, niveles } =
       await this.obtenerDatosActualizados(user);
 
     return {
@@ -79,14 +82,16 @@ export class SyncService {
       productos,
       stock,
       categorias,
+      niveles,
     };
   }
 
-  /** Productos activos + stock del usuario + categorías para el escáner. */
+  /** Productos activos + stock del usuario + categorías + niveles de stock. */
   private async obtenerDatosActualizados(user: UserEntity): Promise<{
     productos: ProductoSyncDto[];
     stock: StockSyncDto[];
     categorias: CategoriaSyncDto[];
+    niveles: NivelStockSyncDto[];
   }> {
     // Productos activos
     const productosEntities = (await this.productoRepository.findAll(
@@ -101,6 +106,7 @@ export class SyncService {
       categoriaNombre: p.categoriaNombre,
       unidadNombre: p.unidadNombre,
       stockMinimo: p.stockMinimo,
+      stockSeguridad: p.stockSeguridad ?? 0,
       activo: p.activo,
       updatedAt: p.updatedAt?.toISOString() || new Date().toISOString(),
     }));
@@ -121,6 +127,16 @@ export class SyncService {
       }
     }
 
+    // Niveles de stock por producto/almacén (safety stock — backlog P2)
+    const nivelesEntities =
+      await this.nivelStockRepository.findByAlmacenes(user.almacenIds ?? []);
+    const niveles: NivelStockSyncDto[] = nivelesEntities.map((n) => ({
+      productoId: n.productoId,
+      almacenId: n.almacenId,
+      stockMinimo: n.stockMinimo,
+      stockSeguridad: n.stockSeguridad,
+    }));
+
     // Categorías
     const categoriasEntities =
       await this.genericNomencladorService.findAllEntities(
@@ -135,7 +151,7 @@ export class SyncService {
       updatedAt: t.updatedAt || new Date().toISOString(),
     }));
 
-    return { productos, stock, categorias };
+    return { productos, stock, categorias, niveles };
   }
 
   async getEstado(): Promise<{ ultimaSincronizacion: string | null }> {

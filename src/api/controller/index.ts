@@ -17,3 +17,4 @@ export { SyncController } from './sync.controller';
 export { HealthController } from './health.controller';
 export { ConteoInventarioController } from './conteo-inventario.controller';
 export { FotoPublicaController } from './foto-publica.controller';
+export { NivelStockController } from './nivel-stock.controller';

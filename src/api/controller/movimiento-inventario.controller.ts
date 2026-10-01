@@ -40,14 +40,27 @@ export class MovimientoInventarioController {
   ) {}
 
   @Get('/')
-  @ApiOperation({ summary: 'Kardex paginado de movimientos' })
+  @ApiOperation({
+    summary: 'Kardex paginado de movimientos (filtros: productoId, almacenId)',
+  })
+  @ApiQuery({ name: 'productoId', required: false })
+  @ApiQuery({ name: 'almacenId', required: false })
   @ApiResponse({ status: 200, description: 'Kardex' })
   async findAll(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
+    @Query('productoId') productoId?: string,
+    @Query('almacenId') almacenId?: string,
   ): Promise<Pagination<any> | any[]> {
     limit = limit && limit > 100 ? 100 : limit;
     const url = this.configService.get(AppConfig.URL);
+    if (productoId || almacenId) {
+      return await this.movimientoInventarioService.listarKardex(
+        { page, limit, route: url + '/api/movimiento-inventario' },
+        productoId,
+        almacenId,
+      );
+    }
     return await this.movimientoInventarioService.findAll(
       { page, limit, route: url + '/api/movimiento-inventario' },
     );

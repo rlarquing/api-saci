@@ -28,12 +28,22 @@ export class CreateProductoDto {
   @IsString()
   unidadId!: string;
 
-  @ApiPropertyOptional({ description: 'Stock mínimo para alertas', default: 0 })
+  @ApiPropertyOptional({ description: 'Stock mínimo global para alertas', default: 0 })
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Max(999999.99)
   stockMinimo?: number;
+
+  @ApiPropertyOptional({
+    description: 'Stock de seguridad global (colchón sobre el mínimo)',
+    default: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(999999.99)
+  stockSeguridad?: number;
 
   @ApiPropertyOptional({
     description:

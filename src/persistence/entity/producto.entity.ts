@@ -94,7 +94,9 @@ export class ProductoEntity extends GenericEntity {
   unidadNombre: string;
 
   /**
-   * Stock mínimo para alertas (el stock real se deriva de los movimientos)
+   * Stock mínimo global para alertas (el stock real se deriva de los
+   * movimientos). Si existe un nivel específico producto/almacén
+   * (nivel_stock), ese umbral tiene prioridad sobre este.
    * @default 0
    */
   @Column({ nullable: false, default: 0 })
@@ -102,6 +104,18 @@ export class ProductoEntity extends GenericEntity {
   @Min(0)
   @Max(999999.99)
   stockMinimo: number;
+
+  /**
+   * Stock de seguridad global: colchón sobre el mínimo. Punto de reorden
+   * = stockMinimo + stockSeguridad. El nivel específico por almacén
+   * (nivel_stock) tiene prioridad si existe.
+   * @default 0
+   */
+  @Column({ nullable: false, default: 0 })
+  @IsNumber()
+  @Min(0)
+  @Max(999999.99)
+  stockSeguridad: number;
 
   /**
    * Foto del producto como data URL (comprimida en cliente a ≤512px JPEG).

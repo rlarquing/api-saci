@@ -6,6 +6,7 @@ import {
 import { GenericNomencladorRepository } from '../../persistence/repository';
 import { TipoMovimiento, UserEntity } from '../../persistence/entity';
 import { NomencladorTypeEnum, RolType } from '../../shared/enum';
+import { NivelStockService } from './nivel-stock.service';
 import {
   BajoMinimoBiDto,
   ComparativaAlmacenesBiDto,
@@ -24,6 +25,7 @@ export class BiService {
     protected movimientoInventarioRepository: MovimientoInventarioRepository,
     protected productoRepository: ProductoRepository,
     protected genericNomencladorRepository: GenericNomencladorRepository,
+    protected nivelStockService: NivelStockService,
   ) {}
 
   /** Filtra los almacenes accesibles según el rol del usuario. */
@@ -207,7 +209,7 @@ export class BiService {
     return { alertas };
   }
 
-  /** Reutiliza el cálculo del service de movimientos vía instancia propia mínima. */
+  /** Reutiliza el umbral efectivo (nivel por almacén o global del producto). */
   private async movimientoInventarioService_bajoMinimo(
     almacenIds: string[],
   ): Promise<Array<any>> {
@@ -222,7 +224,12 @@ export class BiService {
         const producto = await this.productoRepository
           .findById(fila.productoId)
           .catch(() => null);
-        if (producto && fila.stock < producto.stockMinimo) {
+        if (!producto) continue;
+        const umbral = await this.nivelStockService.resolverUmbral(
+          producto,
+          fila.almacenId,
+        );
+        if (fila.stock < umbral.puntoReorden) {
           alertas.push({
             productoId: fila.productoId,
             productoCodigo: fila.productoCodigo,
@@ -230,7 +237,12 @@ export class BiService {
             almacenId: fila.almacenId,
             almacenNombre: fila.almacenNombre,
             stock: fila.stock,
-            stockMinimo: producto.stockMinimo,
+            stockMinimo: umbral.stockMinimo,
+            stockSeguridad: umbral.stockSeguridad,
+            puntoReorden: umbral.puntoReorden,
+            sugerido: Math.max(umbral.puntoReorden - fila.stock, 0),
+            estado:
+              fila.stock < umbral.stockMinimo ? 'BAJO_MINIMO' : 'REORDEN',
           });
         }
       }

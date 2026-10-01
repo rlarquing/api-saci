@@ -11,3 +11,4 @@ export { MovimientoInventarioRepository } from './movimiento-inventario.reposito
 export { ProductoRepository } from './producto.repository';
 export { QrRepository } from './qr.repository';
 export { ConteoInventarioRepository } from './conteo-inventario.repository';
+export { NivelStockRepository } from './nivel-stock.repository';

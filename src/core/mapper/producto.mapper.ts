@@ -18,7 +18,7 @@ export class ProductoMapper {
 
   /** Genera el SKU (PRD-XXXXXX) y resuelve los denormalizados de catálogo. */
   async dtoToEntity(createDto: CreateProductoDto): Promise<ProductoEntity> {
-    const { nombre, descripcion, categoriaId, unidadId, stockMinimo } = createDto;
+    const { nombre, descripcion, categoriaId, unidadId, stockMinimo, stockSeguridad } = createDto;
     const consecutivo = (await this.productoRepository.obtenerUltimoConsecutivo()) + 1;
     const codigo = `PRD-${String(consecutivo).padStart(6, '0')}`;
     const categoria = await this.genericNomencladorRepository.findById(
@@ -39,6 +39,7 @@ export class ProductoMapper {
       unidadId,
       unidadNombre: unidad.nombre,
       stockMinimo: stockMinimo ?? 0,
+      stockSeguridad: stockSeguridad ?? 0,
       foto: createDto.foto ?? null,
     });
   }
@@ -50,6 +51,7 @@ export class ProductoMapper {
     if (updateDto.nombre !== undefined) entity.nombre = updateDto.nombre;
     if (updateDto.descripcion !== undefined) entity.descripcion = updateDto.descripcion;
     if (updateDto.stockMinimo !== undefined) entity.stockMinimo = updateDto.stockMinimo;
+    if (updateDto.stockSeguridad !== undefined) entity.stockSeguridad = updateDto.stockSeguridad;
     if (updateDto.categoriaId) {
       const categoria = await this.genericNomencladorRepository.findById(
         NomencladorTypeEnum.CATEGORIA,
@@ -83,6 +85,7 @@ export class ProductoMapper {
       unidadId: entity.unidadId,
       unidadNombre: entity.unidadNombre,
       stockMinimo: entity.stockMinimo,
+      stockSeguridad: entity.stockSeguridad ?? 0,
       hasFoto: !!entity.foto,
       activo: entity.activo,
       createdAt: entity.createdAt,

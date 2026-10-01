@@ -12,7 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { UserRepository, RolRepository } from '../../persistence/repository';
 import { SocketService } from '../../core/service';
-import { MenuEventPayload } from '../../shared/dto';
+import { MenuEventPayload, NotificacionPayload } from '../../shared/dto';
 import { Subscription } from 'rxjs';
 import { UserEntity } from '../../persistence/entity';
 
@@ -30,6 +30,7 @@ export class SocketGateway
   private menuSubscription: Subscription;
   private qrSubscription: Subscription;
   private movimientoSubscription: Subscription;
+  private notificacionSubscription: Subscription;
 
   constructor(
     private readonly jwtService: JwtService,
@@ -51,6 +52,11 @@ export class SocketGateway
       .onMovimientoEvent()
       .subscribe((event) => {
         this.server.emit('movimiento:change', event);
+      });
+    this.notificacionSubscription = this.socketService
+      .onNotificacion()
+      .subscribe((event: NotificacionPayload) => {
+        this.server.emit('notificacion', event);
       });
   }
 

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppConfig } from './app.keys';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { config } from '../config/config';
 import { LoggerProvider } from './core/logger/logger.provider';
@@ -22,6 +23,8 @@ import { module } from './app.service';
         limit: 60, // 60 peticiones por ventana
       },
     ]),
+    // Cron del digest diario de stock (digest.service; activo con EMAIL_DIGEST=true)
+    ScheduleModule.forRoot(),
     ...module,
   ],
   controllers: [],

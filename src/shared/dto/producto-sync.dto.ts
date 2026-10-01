@@ -16,6 +16,8 @@ export class ProductoSyncDto {
   unidadNombre: string;
   @ApiProperty({ description: 'Stock mínimo' })
   stockMinimo: number;
+  @ApiProperty({ description: 'Stock de seguridad global' })
+  stockSeguridad: number;
   @ApiProperty({ description: 'Activo' })
   activo: boolean;
   @ApiProperty({ description: 'Actualizado' })

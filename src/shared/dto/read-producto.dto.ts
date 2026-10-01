@@ -28,6 +28,9 @@ export class ReadProductoDto {
   @ApiProperty({ description: 'Stock mínimo para alertas' })
   stockMinimo!: number;
 
+  @ApiProperty({ description: 'Stock de seguridad global (colchón sobre el mínimo)' })
+  stockSeguridad!: number;
+
   @ApiProperty({ description: '¿Tiene foto? (la imagen se sirve en /api/producto-foto/:id)' })
   hasFoto!: boolean;
 

@@ -4,6 +4,7 @@ import {
   MenuEventPayload,
   QrEventPayload,
   MovimientoEventPayload,
+  NotificacionPayload,
 } from '../../shared/dto';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class SocketService {
   private readonly menuEvents$ = new Subject<MenuEventPayload>();
   private readonly qrEvents$ = new Subject<QrEventPayload>();
   private readonly movimientoEvents$ = new Subject<MovimientoEventPayload>();
+  private readonly notificacionEvents$ = new Subject<NotificacionPayload>();
 
   getHello(): string {
     return 'Hello World!';
@@ -38,5 +40,14 @@ export class SocketService {
 
   onMovimientoEvent(): Observable<MovimientoEventPayload> {
     return this.movimientoEvents$.asObservable();
+  }
+
+  /** Push de umbrales de stock (campana del panel y alertas del escáner). */
+  emitNotificacion(event: NotificacionPayload): void {
+    this.notificacionEvents$.next(event);
+  }
+
+  onNotificacion(): Observable<NotificacionPayload> {
+    return this.notificacionEvents$.asObservable();
   }
 }

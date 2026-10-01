@@ -16,3 +16,4 @@ export { MovimientoInventarioEntity } from './movimiento-inventario.entity';
 export { TipoMovimiento } from './movimiento-inventario.entity';
 export { QrEntity } from './qr.entity';
 export { ConteoInventarioEntity, LineaConteo, EstadoConteo } from './conteo-inventario.entity';
+export { NivelStockEntity } from './nivel-stock.entity';

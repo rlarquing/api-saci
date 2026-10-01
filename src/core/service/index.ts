@@ -16,3 +16,5 @@ export { BiService } from './bi.service';
 export { SyncService } from './sync.service';
 export { SyncRelationService } from './sync-relation.service';
 export { ConteoInventarioService } from './conteo-inventario.service';
+export { NivelStockService, UmbralStock } from './nivel-stock.service';
+export { DigestService } from './digest.service';

@@ -18,6 +18,8 @@ import {
   SyncService,
   SyncRelationService,
   ConteoInventarioService,
+  NivelStockService,
+  DigestService,
 } from './service';
 import {
   EndPointMapper,
@@ -32,6 +34,7 @@ import {
   RegistroDiarioMapper,
   QrMapper,
   ConteoInventarioMapper,
+  NivelStockMapper,
 } from './mapper';
 import { LoggerProvider } from './logger/logger.provider';
 
@@ -68,4 +71,7 @@ export const providers = [
   SyncRelationService,
   ConteoInventarioMapper,
   ConteoInventarioService,
+  NivelStockMapper,
+  NivelStockService,
+  DigestService,
 ];

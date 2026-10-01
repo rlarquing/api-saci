@@ -7,12 +7,13 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ObjectId } from 'mongodb';
-import { PaginationOptions } from '../../shared/pagination';
+import { Pagination, PaginationOptions } from '../../shared/pagination';
 import { MovimientoInventarioMapper } from '../mapper';
 import { LogHistoryService } from './log-history.service';
 import { GenericService } from './generic.service';
 import { SocketService } from './socket.service';
 import { RegistroDiarioService } from './registro-diario.service';
+import { NivelStockService, UmbralStock } from './nivel-stock.service';
 import {
   AlmacenEntity,
   MovimientoInventarioEntity,
@@ -30,6 +31,7 @@ import {
 import { NomencladorTypeEnum, RolType } from '../../shared/enum';
 import { AppConfig } from '../../app.keys';
 import { ResponseDto } from '../../shared/dto';
+import { NotificacionPayload } from '../../shared/dto';
 import { fechaLegible, toCsvBuffer } from '../../shared/helper/csv.helper';
 
 /**
@@ -57,6 +59,7 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
     private registroDiarioRepository: RegistroDiarioRepository,
     private registroDiarioService: RegistroDiarioService,
     private socketService: SocketService,
+    private nivelStockService: NivelStockService,
   ) {
     super(
       configService,
@@ -89,7 +92,12 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
     );
   }
 
-  /** Productos por debajo del stock mínimo (alertas). */
+  /**
+   * Productos por debajo del punto de reorden (alertas — backlog P2).
+   * Umbral efectivo: nivel_stock producto/almacén si existe; si no, los
+   * globales del producto. estado: BAJO_MINIMO (stock < mínimo) o REORDEN
+   * (stock < punto de reorden pero >= mínimo).
+   */
   async bajoMinimo(almacenId?: string): Promise<
     Array<{
       productoId: string;
@@ -99,6 +107,10 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
       almacenNombre: string;
       stock: number;
       stockMinimo: number;
+      stockSeguridad: number;
+      puntoReorden: number;
+      sugerido: number;
+      estado: 'BAJO_MINIMO' | 'REORDEN';
     }>
   > {
     const filas = await this.movimientoInventarioRepository.calcularStock(
@@ -110,7 +122,11 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
       const producto: ProductoEntity =
         await this.productoRepository.findById(fila.productoId);
       if (!producto) continue;
-      if (fila.stock < producto.stockMinimo) {
+      const umbral = await this.nivelStockService.resolverUmbral(
+        producto,
+        fila.almacenId,
+      );
+      if (fila.stock < umbral.puntoReorden) {
         alertas.push({
           productoId: fila.productoId,
           productoCodigo: fila.productoCodigo,
@@ -118,11 +134,35 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
           almacenId: fila.almacenId,
           almacenNombre: fila.almacenNombre,
           stock: fila.stock,
-          stockMinimo: producto.stockMinimo,
+          stockMinimo: umbral.stockMinimo,
+          stockSeguridad: umbral.stockSeguridad,
+          puntoReorden: umbral.puntoReorden,
+          sugerido: Math.max(umbral.puntoReorden - fila.stock, 0),
+          estado:
+            fila.stock < umbral.stockMinimo ? 'BAJO_MINIMO' : 'REORDEN',
         });
       }
     }
     return alertas;
+  }
+
+  /**
+   * Kardex paginado con filtros por producto y/o almacén (timeline — backlog P2).
+   */
+  async listarKardex(
+    options: PaginationOptions,
+    productoId?: string,
+    almacenId?: string,
+  ): Promise<Pagination<any>> {
+    const resultado = await this.movimientoInventarioRepository.listarFiltrado(
+      options,
+      productoId,
+      almacenId,
+    );
+    const items = await Promise.all(
+      resultado.items.map((e) => this.movimientoInventarioMapper.entityToDto(e)),
+    );
+    return new Pagination(items, resultado.meta, resultado.links);
   }
 
   // ================== OPERACIONES ==================
@@ -214,6 +254,13 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
         movimientoId: creado.getIdString(),
         timestamp: new Date().toISOString(),
       });
+      await this.notificarUmbral(
+        producto,
+        data.almacenId,
+        almacen.nombre,
+        stockActual,
+        stockActual + cantidad,
+      );
       return this.respuesta(creado);
     } catch (error) {
       // Compensación manual: si el paso 9 falla, el movimiento no debe contar
@@ -300,6 +347,13 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
         movimientoId: creado.getIdString(),
         timestamp: new Date().toISOString(),
       });
+      await this.notificarUmbral(
+        producto,
+        data.almacenId,
+        almacen.nombre,
+        stockActual,
+        stockActual - cantidad,
+      );
       return this.respuesta(creado);
     } catch (error) {
       await this.revertirMovimiento(movimiento);
@@ -391,6 +445,13 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
         movimientoId: creado.getIdString(),
         timestamp: new Date().toISOString(),
       });
+      await this.notificarUmbral(
+        producto,
+        data.almacenId,
+        almacen.nombre,
+        stockActual,
+        stockActual + signo * cantidad,
+      );
       return this.respuesta(creado);
     } catch (error) {
       await this.revertirMovimiento(movimiento);
@@ -492,6 +553,20 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
         movimientoId: salidaCreada.getIdString(),
         timestamp: new Date().toISOString(),
       });
+      await this.notificarUmbral(
+        producto,
+        data.almacenOrigenId,
+        origen.nombre,
+        stockOrigen,
+        stockOrigen - cantidad,
+      );
+      await this.notificarUmbral(
+        producto,
+        data.almacenDestinoId,
+        destino.nombre,
+        stockDestino,
+        stockDestino + cantidad,
+      );
       return this.respuesta(salidaCreada, entradaCreada);
     } catch (error) {
       // Compensación: revertir la salida del paso 1
@@ -567,6 +642,45 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
         : 'Movimiento registrado correctamente';
     result.id = creados[0].getIdString();
     return result;
+  }
+
+  /**
+   * Push de umbral (backlog P2): si el movimiento CRUZA el punto de reorden
+   * (antes >= punto, después < punto) emite el evento socket 'notificacion'
+   * para la campana del panel y las alertas locales del escáner.
+   */
+  private async notificarUmbral(
+    producto: ProductoEntity,
+    almacenId: string,
+    almacenNombre: string,
+    stockAntes: number,
+    stockDespues: number,
+  ): Promise<void> {
+    try {
+      const umbral: UmbralStock = await this.nivelStockService.resolverUmbral(
+        producto,
+        almacenId,
+      );
+      if (stockAntes >= umbral.puntoReorden && stockDespues < umbral.puntoReorden) {
+        const payload: NotificacionPayload = {
+          tipo: stockDespues < umbral.stockMinimo ? 'BAJO_MINIMO' : 'REORDEN',
+          productoId: producto.getIdString(),
+          productoCodigo: producto.codigo,
+          productoNombre: producto.nombre,
+          almacenId,
+          almacenNombre,
+          stock: stockDespues,
+          stockMinimo: umbral.stockMinimo,
+          stockSeguridad: umbral.stockSeguridad,
+          puntoReorden: umbral.puntoReorden,
+          sugerido: Math.max(umbral.puntoReorden - stockDespues, 0),
+          timestamp: new Date().toISOString(),
+        };
+        this.socketService.emitNotificacion(payload);
+      }
+    } catch {
+      // El push nunca puede romper la operación de inventario.
+    }
   }
 
   /**

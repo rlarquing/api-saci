@@ -44,6 +44,7 @@ export class ProductoController extends GenericController<ProductoEntity> {
       'Categoría',
       'Unidad',
       'Stock mínimo',
+      'Stock seguridad',
       'Foto',
     ];
     this.key = [
@@ -53,6 +54,7 @@ export class ProductoController extends GenericController<ProductoEntity> {
       'categoriaNombre',
       'unidadNombre',
       'stockMinimo',
+      'stockSeguridad',
       'hasFoto',
     ];
   }
