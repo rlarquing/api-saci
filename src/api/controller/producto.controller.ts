@@ -44,6 +44,7 @@ export class ProductoController extends GenericController<ProductoEntity> {
       'Categoría',
       'Unidad',
       'Stock mínimo',
+      'Foto',
     ];
     this.key = [
       'id',
@@ -52,6 +53,7 @@ export class ProductoController extends GenericController<ProductoEntity> {
       'categoriaNombre',
       'unidadNombre',
       'stockMinimo',
+      'hasFoto',
     ];
   }
 
@@ -62,13 +64,15 @@ export class ProductoController extends GenericController<ProductoEntity> {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('sinPaginacion') sinPaginacion?: boolean,
-  ): Promise<Pagination<any> | any[]> {
+  ): Promise<any> {
     limit = limit && limit > 100 ? 100 : limit;
     const url = this.configService.get(AppConfig.URL);
-    return await this.productoService.findAll(
+    const resultado = await this.productoService.findAll(
       { page, limit, route: url + '/api/producto' },
       sinPaginacion,
     );
+    if (Array.isArray(resultado)) return resultado;
+    return new ListadoDto(this.header, this.key, resultado);
   }
 
   @Get('/codigo/:codigo')

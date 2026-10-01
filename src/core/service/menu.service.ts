@@ -351,7 +351,7 @@ export class MenuService extends GenericService<MenuEntity> {
       },
       {
         label: 'Conteos',
-        icon: 'fact_check',
+        icon: 'clipboard-check',
         to: '/admin/conteos',
         controller: 'conteo-inventario',
         roles: [
