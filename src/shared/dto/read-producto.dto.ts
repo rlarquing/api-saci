@@ -28,6 +28,9 @@ export class ReadProductoDto {
   @ApiProperty({ description: 'Stock mínimo para alertas' })
   stockMinimo!: number;
 
+  @ApiProperty({ description: '¿Tiene foto? (la imagen se sirve en /api/producto-foto/:id)' })
+  hasFoto!: boolean;
+
   @ApiProperty({ description: 'Activo (soft-delete)' })
   activo!: boolean;
 

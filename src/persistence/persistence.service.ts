@@ -10,6 +10,7 @@ import {
   MovimientoInventarioRepository,
   ProductoRepository,
   QrRepository,
+  ConteoInventarioRepository,
 } from './repository';
 import {
   EndPointEntity,
@@ -26,6 +27,7 @@ import {
   MovimientoInventarioEntity,
   RegistroDiarioEntity,
   QrEntity,
+  ConteoInventarioEntity,
 } from './entity';
 
 export const repository = [
@@ -40,6 +42,7 @@ export const repository = [
   MovimientoInventarioRepository,
   ProductoRepository,
   QrRepository,
+  ConteoInventarioRepository,
 ];
 export const entity = [
   EndPointEntity,
@@ -56,4 +59,5 @@ export const entity = [
   MovimientoInventarioEntity,
   RegistroDiarioEntity,
   QrEntity,
+  ConteoInventarioEntity,
 ];

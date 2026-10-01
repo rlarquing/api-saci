@@ -10,3 +10,4 @@ export { RegistroDiarioRepository } from './registro-diario.repository';
 export { MovimientoInventarioRepository } from './movimiento-inventario.repository';
 export { ProductoRepository } from './producto.repository';
 export { QrRepository } from './qr.repository';
+export { ConteoInventarioRepository } from './conteo-inventario.repository';

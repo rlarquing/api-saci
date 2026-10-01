@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
   UsePipes,
@@ -13,12 +14,12 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiNotFoundResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { GetUser, IpAddress } from '../decorator';
+import { GetUser, IpAddress, Roles } from '../decorator';
 import { PermissionGuard, RolGuard } from '../guard';
 import { GenericController } from './generic.controller';
 import { ProductoEntity, UserEntity } from '../../persistence/entity';
 import { ProductoService } from '../../core/service';
-import { CreateProductoDto, ListadoDto, ResponseDto, UpdateProductoDto } from '../../shared/dto';
+import { CreateProductoDto, FotoProductoDto, ListadoDto, ResponseDto, UpdateProductoDto } from '../../shared/dto';
 import { Pagination } from '../../shared/pagination';
 import { RolType } from '../../shared/enum';
 import { AppConfig } from '../../app.keys';
@@ -98,5 +99,20 @@ export class ProductoController extends GenericController<ProductoEntity> {
     @IpAddress() ip: string,
   ): Promise<ResponseDto> {
     return await this.productoService.update(user, id, updateDto, ip);
+  }
+
+  @Put('/:id/foto')
+  @Roles(RolType.ADMINISTRADOR, RolType.JEFE_DE_ALMACEN)
+  @ApiOperation({
+    summary: 'Subir/actualizar foto del producto (data URL base64 comprimida en cliente)',
+  })
+  @ApiResponse({ status: 200, description: 'Foto actualizada', type: ResponseDto })
+  async subirFoto(
+    @GetUser() user: UserEntity,
+    @Param('id') id: string,
+    @Body() dto: FotoProductoDto,
+    @IpAddress() ip: string,
+  ): Promise<ResponseDto> {
+    return await this.productoService.guardarFoto(user, id, dto.foto, ip);
   }
 }

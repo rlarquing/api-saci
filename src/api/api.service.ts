@@ -14,6 +14,8 @@ import {
   BiController,
   SyncController,
   HealthController,
+  ConteoInventarioController,
+  FotoPublicaController,
 } from './controller';
 
 export const controller = [
@@ -32,4 +34,6 @@ export const controller = [
   BiController,
   SyncController,
   HealthController,
+  ConteoInventarioController,
+  FotoPublicaController,
 ];

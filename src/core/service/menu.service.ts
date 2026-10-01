@@ -349,6 +349,17 @@ export class MenuService extends GenericService<MenuEntity> {
         controller: 'registro-diario',
         roles: [RolType.ADMINISTRADOR, RolType.JEFE_DE_ALMACEN],
       },
+      {
+        label: 'Conteos',
+        icon: 'fact_check',
+        to: '/admin/conteos',
+        controller: 'conteo-inventario',
+        roles: [
+          RolType.ADMINISTRADOR,
+          RolType.JEFE_DE_ALMACEN,
+          RolType.OPERARIO,
+        ],
+      },
     ];
 
     for (const seccion of secciones) {

@@ -12,6 +12,7 @@ import { MovimientoInventarioMapper } from '../mapper';
 import { LogHistoryService } from './log-history.service';
 import { GenericService } from './generic.service';
 import { SocketService } from './socket.service';
+import { RegistroDiarioService } from './registro-diario.service';
 import {
   AlmacenEntity,
   MovimientoInventarioEntity,
@@ -29,6 +30,7 @@ import {
 import { NomencladorTypeEnum, RolType } from '../../shared/enum';
 import { AppConfig } from '../../app.keys';
 import { ResponseDto } from '../../shared/dto';
+import { fechaLegible, toCsvBuffer } from '../../shared/helper/csv.helper';
 
 /**
  * Motor de movimientos de inventario (SACI).
@@ -53,7 +55,7 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
     private qrRepository: QrRepository,
     private genericNomencladorRepository: GenericNomencladorRepository,
     private registroDiarioRepository: RegistroDiarioRepository,
-    private registroDiarioService: any,
+    private registroDiarioService: RegistroDiarioService,
     private socketService: SocketService,
   ) {
     super(
@@ -565,5 +567,55 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
         : 'Movimiento registrado correctamente';
     result.id = creados[0].getIdString();
     return result;
+  }
+
+  /**
+   * Exportación CSV del kardex (backlog P1): hasta 10.000 movimientos activos
+   * con filtros opcionales por almacén y tipo, del más reciente al más antiguo.
+   */
+  async exportarMovimientosCsv(
+    almacenId?: string,
+    tipo?: string,
+  ): Promise<Buffer> {
+    const movimientos =
+      await this.movimientoInventarioRepository.listarExportacion(
+        almacenId,
+        tipo,
+      );
+
+    const filas = movimientos.map((m) => ({
+      fecha: fechaLegible(m.fecha),
+      tipo: m.tipo,
+      codigo: m.productoCodigo,
+      producto: m.productoNombre,
+      almacen: m.almacenNombre,
+      destino: m.almacenDestinoNombre ?? '',
+      cantidad: m.cantidad,
+      signoAjuste: m.tipo === TipoMovimiento.AJUSTE ? (m.signoAjuste === -1 ? 'Faltante' : 'Sobrante') : '',
+      saldo: m.saldoResultante ?? '',
+      usuario: m.userName,
+      qr: m.qrCodigo ?? '',
+      observaciones: m.observaciones ?? '',
+    }));
+
+    return toCsvBuffer(
+      ['Fecha', 'Tipo', 'SKU', 'Producto', 'Almacén', 'Destino', 'Cantidad', 'Ajuste', 'Saldo resultante', 'Usuario', 'QR', 'Observaciones'],
+      ['fecha', 'tipo', 'codigo', 'producto', 'almacen', 'destino', 'cantidad', 'signoAjuste', 'saldo', 'usuario', 'qr', 'observaciones'],
+      filas,
+    );
+  }
+
+  /** Exportación CSV del stock derivado por producto/almacén. */
+  async exportarStockCsv(almacenId?: string): Promise<Buffer> {
+    const filas = await this.movimientoInventarioRepository.calcularStock(
+      undefined,
+      almacenId,
+    );
+
+    return toCsvBuffer(
+      ['SKU', 'Producto', 'Almacén', 'Stock'],
+      ['productoCodigo', 'productoNombre', 'almacenNombre', 'stock'],
+      filas as any,
+    );
   }
 }

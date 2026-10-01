@@ -15,3 +15,5 @@ export { QrController } from './qr.controller';
 export { BiController } from './bi.controller';
 export { SyncController } from './sync.controller';
 export { HealthController } from './health.controller';
+export { ConteoInventarioController } from './conteo-inventario.controller';
+export { FotoPublicaController } from './foto-publica.controller';

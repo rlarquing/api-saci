@@ -73,3 +73,5 @@ export { ReadProductoDto } from './read-producto.dto';
 export { UpdateMultipleProductoDto } from './update-multiple-producto.dto';
 export { ProductoSyncDto } from './producto-sync.dto';
 export { StockSyncDto } from './stock-sync.dto';
+export { CreateConteoDto, ConteoLineaDto, ReadConteoDto } from './conteo-inventario.dto';
+export { FotoProductoDto } from './create-producto.dto';

@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
@@ -101,6 +102,16 @@ export class ProductoEntity extends GenericEntity {
   @Min(0)
   @Max(999999.99)
   stockMinimo: number;
+
+  /**
+   * Foto del producto como data URL (comprimida en cliente a ≤512px JPEG).
+   * Nunca se devuelve en listados (solo hasFoto); se sirve por /api/producto-foto/:id.
+   */
+  @Column({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(900000)
+  foto?: string | null;
 
   constructor(partial?: Partial<ProductoEntity>) {
     super();

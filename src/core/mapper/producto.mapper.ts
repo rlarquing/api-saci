@@ -39,6 +39,7 @@ export class ProductoMapper {
       unidadId,
       unidadNombre: unidad.nombre,
       stockMinimo: stockMinimo ?? 0,
+      foto: createDto.foto ?? null,
     });
   }
 
@@ -65,6 +66,9 @@ export class ProductoMapper {
       entity.unidadId = updateDto.unidadId;
       entity.unidadNombre = unidad.nombre;
     }
+    if (updateDto.foto !== undefined) {
+      entity.foto = updateDto.foto ?? null;
+    }
     return entity;
   }
 
@@ -79,6 +83,7 @@ export class ProductoMapper {
       unidadId: entity.unidadId,
       unidadNombre: entity.unidadNombre,
       stockMinimo: entity.stockMinimo,
+      hasFoto: !!entity.foto,
       activo: entity.activo,
       createdAt: entity.createdAt,
     } as unknown as ReadProductoDto;

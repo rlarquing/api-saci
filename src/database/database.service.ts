@@ -16,6 +16,7 @@ import {
   RolEntity,
   CategoriaEntity,
   UserEntity,
+  ConteoInventarioEntity,
 } from '../persistence/entity';
 
 export const databaseProviders = [
@@ -42,6 +43,7 @@ export const databaseProviders = [
           RolEntity,
           CategoriaEntity,
           UserEntity,
+          ConteoInventarioEntity,
         ],
         migrations: isMongo ? [] : [__dirname + '/migrations/*{.ts,.js}'],
         migrationsRun: isMongo ? false : dbConfig.migrationsRun,

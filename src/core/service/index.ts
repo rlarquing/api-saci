@@ -15,3 +15,4 @@ export { QrService } from './qr.service';
 export { BiService } from './bi.service';
 export { SyncService } from './sync.service';
 export { SyncRelationService } from './sync-relation.service';
+export { ConteoInventarioService } from './conteo-inventario.service';

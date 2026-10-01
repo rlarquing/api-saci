@@ -17,6 +17,7 @@ import {
   BiService,
   SyncService,
   SyncRelationService,
+  ConteoInventarioService,
 } from './service';
 import {
   EndPointMapper,
@@ -30,6 +31,7 @@ import {
   ProductoMapper,
   RegistroDiarioMapper,
   QrMapper,
+  ConteoInventarioMapper,
 } from './mapper';
 import { LoggerProvider } from './logger/logger.provider';
 
@@ -64,4 +66,6 @@ export const providers = [
   BiService,
   SyncService,
   SyncRelationService,
+  ConteoInventarioMapper,
+  ConteoInventarioService,
 ];

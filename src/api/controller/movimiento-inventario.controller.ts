@@ -2,14 +2,17 @@ import {
   Body,
   Controller,
   Get,
+  HttpStatus,
   Post,
   Query,
+  Res,
   UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 import { GetUser, IpAddress } from '../decorator';
 import { PermissionGuard, RolGuard } from '../guard';
 import { MovimientoInventarioEntity, UserEntity } from '../../persistence/entity';
@@ -66,6 +69,43 @@ export class MovimientoInventarioController {
   @ApiQuery({ name: 'almacenId', required: false })
   async bajoMinimo(@Query('almacenId') almacenId?: string) {
     return await this.movimientoInventarioService.bajoMinimo(almacenId);
+  }
+
+  @Get('/exportar')
+  @ApiOperation({
+    summary: 'Descargar kardex completo en CSV (filtros: almacenId, tipo) — hasta 10.000 filas',
+  })
+  @ApiQuery({ name: 'almacenId', required: false })
+  @ApiQuery({ name: 'tipo', required: false, example: 'ENTRADA' })
+  async exportarMovimientos(
+    @Query('almacenId') almacenId?: string,
+    @Query('tipo') tipo?: string,
+    @Res() res?: Response,
+  ): Promise<void> {
+    const buffer = await this.movimientoInventarioService.exportarMovimientosCsv(
+      almacenId,
+      tipo,
+    );
+    res!.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res!.setHeader('Content-Disposition', 'attachment; filename="movimientos-inventario.csv"');
+    res!.setHeader('Content-Length', buffer.length);
+    res!.status(HttpStatus.OK).send(buffer);
+  }
+
+  @Get('/stock/exportar')
+  @ApiOperation({
+    summary: 'Descargar stock derivado en CSV (filtro opcional: almacenId)',
+  })
+  @ApiQuery({ name: 'almacenId', required: false })
+  async exportarStock(
+    @Query('almacenId') almacenId?: string,
+    @Res() res?: Response,
+  ): Promise<void> {
+    const buffer = await this.movimientoInventarioService.exportarStockCsv(almacenId);
+    res!.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res!.setHeader('Content-Disposition', 'attachment; filename="stock-inventario.csv"');
+    res!.setHeader('Content-Length', buffer.length);
+    res!.status(HttpStatus.OK).send(buffer);
   }
 
   @Post('/entrada')

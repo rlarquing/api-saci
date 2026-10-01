@@ -136,4 +136,20 @@ export class MovimientoInventarioRepository
       take: limite,
     });
   }
+
+  /** Listado plano para exportación CSV (filtros opcionales, tope de filas). */
+  async listarExportacion(
+    almacenId?: string,
+    tipo?: string,
+    max = 10000,
+  ): Promise<MovimientoInventarioEntity[]> {
+    const where: Record<string, unknown> = { activo: true };
+    if (almacenId) where.almacenId = almacenId;
+    if (tipo) where.tipo = tipo;
+    return await this.repository.find({
+      where: where as any,
+      order: { fecha: 'DESC' as any },
+      take: max,
+    });
+  }
 }

@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
@@ -33,4 +34,21 @@ export class CreateProductoDto {
   @Min(0)
   @Max(999999.99)
   stockMinimo?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Foto como data URL (data:image/jpeg;base64,...). Comprimir en cliente a ≤512px / ~200KB',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(900000)
+  foto?: string | null;
+}
+
+/** Payload dedicado para subir/actualizar solo la foto. */
+export class FotoProductoDto {
+  @ApiProperty({ description: 'Foto como data URL (image/jpeg|png|webp)' })
+  @IsString()
+  @MaxLength(900000)
+  foto!: string;
 }
