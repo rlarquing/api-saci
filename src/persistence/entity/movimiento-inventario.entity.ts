@@ -8,6 +8,7 @@ import {
   Max,
   MaxLength,
   Min,
+  MinLength,
 } from 'class-validator';
 import { GenericEntity } from './generic.entity';
 import { ProductoEntity } from './producto.entity';
@@ -181,6 +182,29 @@ export class MovimientoInventarioEntity extends GenericEntity {
   @IsString()
   @Max(100)
   trasladoId?: string;
+
+  /**
+   * Lote del movimiento (backlog P3): identificador de lote/fabricación que
+   * viaja con la mercancía. Opcional; se estampa al crear el movimiento y
+   * NUNCA se edita (los movimientos son inmutables). El stock por lote se
+   * deriva agregando esta colección por (producto, almacén, lote).
+   */
+  @Index()
+  @Column({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @Max(50)
+  lote?: string;
+
+  /**
+   * Fecha de caducidad del lote (backlog P3): alimenta las alertas de
+   * "próximo a vencer" (VENCIDO / PRÓXIMO / OK). Opcional; inmutable.
+   */
+  @Column({ type: 'timestamp', nullable: true })
+  @IsOptional()
+  @IsDateString()
+  fechaCaducidad?: Date;
 
   /**
    * Fecha de salida análoga a SACP: `activo=false` marca un movimiento REVERTIDO

@@ -12,6 +12,7 @@ import {
   QrRepository,
   ConteoInventarioRepository,
   NivelStockRepository,
+  ProductoUbicacionRepository,
 } from './repository';
 import {
   EndPointEntity,
@@ -30,6 +31,7 @@ import {
   QrEntity,
   ConteoInventarioEntity,
   NivelStockEntity,
+  ProductoUbicacionEntity,
 } from './entity';
 
 export const repository = [
@@ -46,6 +48,7 @@ export const repository = [
   QrRepository,
   ConteoInventarioRepository,
   NivelStockRepository,
+  ProductoUbicacionRepository,
 ];
 export const entity = [
   EndPointEntity,
@@ -64,4 +67,5 @@ export const entity = [
   QrEntity,
   ConteoInventarioEntity,
   NivelStockEntity,
+  ProductoUbicacionEntity,
 ];

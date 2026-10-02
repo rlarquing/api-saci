@@ -87,6 +87,8 @@ export class ProductoMapper {
       stockMinimo: entity.stockMinimo,
       stockSeguridad: entity.stockSeguridad ?? 0,
       hasFoto: !!entity.foto,
+      productoPadreId: entity.productoPadreId ?? null,
+      atributosResumen: entity.atributosResumen ?? null,
       activo: entity.activo,
       createdAt: entity.createdAt,
     } as unknown as ReadProductoDto;

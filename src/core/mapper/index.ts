@@ -11,3 +11,4 @@ export { RegistroDiarioMapper } from './registro-diario.mapper';
 export { QrMapper } from './qr.mapper';
 export { ConteoInventarioMapper } from './conteo-inventario.mapper';
 export { NivelStockMapper } from './nivel-stock.mapper';
+export { ProductoUbicacionMapper } from './producto-ubicacion.mapper';

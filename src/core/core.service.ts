@@ -20,6 +20,7 @@ import {
   ConteoInventarioService,
   NivelStockService,
   DigestService,
+  ProductoUbicacionService,
 } from './service';
 import {
   EndPointMapper,
@@ -35,6 +36,7 @@ import {
   QrMapper,
   ConteoInventarioMapper,
   NivelStockMapper,
+  ProductoUbicacionMapper,
 } from './mapper';
 import { LoggerProvider } from './logger/logger.provider';
 
@@ -74,4 +76,6 @@ export const providers = [
   NivelStockMapper,
   NivelStockService,
   DigestService,
+  ProductoUbicacionMapper,
+  ProductoUbicacionService,
 ];

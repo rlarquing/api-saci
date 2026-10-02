@@ -92,6 +92,80 @@ export class MovimientoInventarioRepository
     }));
   }
 
+  /**
+   * Stock derivado por LOTE (backlog P3): misma semántica de signos que
+   * calcularStock (ENTRADA +1, SALIDA -1, AJUSTE ±1, TRASLADO 0) pero
+   * agrupando por (producto, almacén, lote, fechaCaducidad). Los movimientos
+   * sin lote forman el grupo lote=null («sin lote»). Σ lotes = stock total.
+   */
+  async stockPorLote(
+    productoId?: string,
+    almacenId?: string,
+  ): Promise<
+    Array<{
+      productoId: string;
+      almacenId: string;
+      productoNombre: string;
+      productoCodigo: string;
+      almacenNombre: string;
+      lote: string | null;
+      fechaCaducidad: Date | null;
+      stock: number;
+    }>
+  > {
+    const match: any = { activo: true };
+    if (productoId) match.productoId = productoId;
+    if (almacenId) match.almacenId = almacenId;
+
+    const pipeline: any[] = [
+      { $match: match },
+      {
+        $addFields: {
+          signo: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$tipo', TipoMovimiento.ENTRADA] }, then: 1 },
+                { case: { $eq: ['$tipo', TipoMovimiento.SALIDA] }, then: -1 },
+                {
+                  case: { $eq: ['$tipo', TipoMovimiento.AJUSTE] },
+                  then: { $cond: [{ $eq: ['$signoAjuste', -1] }, -1, 1] },
+                },
+                { case: { $eq: ['$tipo', TipoMovimiento.TRASLADO] }, then: 0 },
+              ],
+              default: 0,
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            productoId: '$productoId',
+            almacenId: '$almacenId',
+            lote: '$lote',
+            fechaCaducidad: '$fechaCaducidad',
+          },
+          productoNombre: { $first: '$productoNombre' },
+          productoCodigo: { $first: '$productoCodigo' },
+          almacenNombre: { $first: '$almacenNombre' },
+          stock: { $sum: { $multiply: ['$cantidad', '$signo'] } },
+        },
+      },
+    ];
+
+    const rows = await this.repository.aggregate(pipeline).toArray();
+    return rows.map((r: any) => ({
+      productoId: r._id?.productoId,
+      almacenId: r._id?.almacenId,
+      productoNombre: r.productoNombre,
+      productoCodigo: r.productoCodigo,
+      almacenNombre: r.almacenNombre,
+      lote: r._id?.lote ?? null,
+      fechaCaducidad: r._id?.fechaCaducidad ?? null,
+      stock: r.stock ?? 0,
+    }));
+  }
+
   /** Stock de un producto en un almacén (0 si no hay movimientos). */
   async stockDe(productoId: string, almacenId: string): Promise<number> {
     const rows = await this.calcularStock(productoId, almacenId);

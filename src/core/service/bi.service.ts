@@ -7,6 +7,7 @@ import { GenericNomencladorRepository } from '../../persistence/repository';
 import { TipoMovimiento, UserEntity } from '../../persistence/entity';
 import { NomencladorTypeEnum, RolType } from '../../shared/enum';
 import { NivelStockService } from './nivel-stock.service';
+import { MovimientoInventarioService } from './movimiento-inventario.service';
 import {
   BajoMinimoBiDto,
   ComparativaAlmacenesBiDto,
@@ -26,6 +27,7 @@ export class BiService {
     protected productoRepository: ProductoRepository,
     protected genericNomencladorRepository: GenericNomencladorRepository,
     protected nivelStockService: NivelStockService,
+    protected movimientoInventarioService: MovimientoInventarioService,
   ) {}
 
   /** Filtra los almacenes accesibles según el rol del usuario. */
@@ -118,6 +120,19 @@ export class BiService {
     const totalProductos = await this.productoRepository.contarProductos();
     const alertas = await this.movimientoInventarioService_bajoMinimo(almacenIds);
 
+    // Lotes vencidos/por vencer (backlog P3) — tolerante a fallos
+    let lotesEnAlerta = 0;
+    try {
+      lotesEnAlerta = (
+        await this.movimientoInventarioService.lotesProximosAVencer(
+          almacenIds,
+          30,
+        )
+      ).length;
+    } catch {
+      lotesEnAlerta = 0;
+    }
+
     return {
       totalProductos,
       totalAlmacenes: almacenIds.length,
@@ -125,6 +140,7 @@ export class BiService {
       entradasHoy,
       salidasHoy,
       alertasBajoMinimo: alertas.length,
+      lotesEnAlerta,
       stockPorAlmacen,
       ultimosMovimientos: ultimos,
     };

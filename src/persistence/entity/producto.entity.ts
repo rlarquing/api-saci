@@ -127,6 +127,39 @@ export class ProductoEntity extends GenericEntity {
   @MaxLength(900000)
   foto?: string | null;
 
+  /**
+   * ID del producto padre si este catálogo es una VARIANTE (backlog P3,
+   * patrón Zoho/BoxHero): cada variante es un producto completo con SKU,
+   * stock y etiquetas propios, agrupado bajo el SKU padre (talla/color).
+   * Solo se admite un nivel de agrupación (el padre nunca tiene padre).
+   */
+  @Index()
+  @Column({ nullable: true })
+  @IsOptional()
+  @IsString()
+  productoPadreId?: string;
+
+  /**
+   * Resumen legible de los atributos de la variante (denormalizado para
+   * listados, ficha del escáner y payload del QR).
+   * @example "Talla: M · Color: Rojo"
+   */
+  @Column({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @Max(200)
+  atributosResumen?: string;
+
+  /**
+   * Atributos de la variante como JSON string: [{"clave":"Talla","valor":"M"}].
+   * Se guarda serializado para portabilidad con el driver Mongo de TypeORM.
+   */
+  @Column({ nullable: true, type: 'text' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  atributosJson?: string;
+
   constructor(partial?: Partial<ProductoEntity>) {
     super();
     Object.assign(this, partial ?? {});

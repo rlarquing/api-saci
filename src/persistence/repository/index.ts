@@ -12,3 +12,4 @@ export { ProductoRepository } from './producto.repository';
 export { QrRepository } from './qr.repository';
 export { ConteoInventarioRepository } from './conteo-inventario.repository';
 export { NivelStockRepository } from './nivel-stock.repository';
+export { ProductoUbicacionRepository } from './producto-ubicacion.repository';

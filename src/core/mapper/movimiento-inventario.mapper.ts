@@ -25,6 +25,8 @@ export class MovimientoInventarioMapper {
       saldoResultante: entity.saldoResultante,
       observaciones: entity.observaciones,
       signoAjuste: entity.signoAjuste,
+      lote: entity.lote,
+      fechaCaducidad: entity.fechaCaducidad,
     } as unknown as ReadMovimientoInventarioDto;
   }
 

@@ -84,6 +84,52 @@ export class MovimientoInventarioController {
     return await this.movimientoInventarioService.bajoMinimo(almacenId);
   }
 
+  @Get('/lotes')
+  @ApiOperation({
+    summary:
+      'Stock derivado por lote con estado de caducidad (VENCIDO/PROXIMO/OK) — P3',
+  })
+  @ApiQuery({ name: 'almacenId', required: false })
+  @ApiQuery({ name: 'productoId', required: false })
+  @ApiQuery({ name: 'diasProximo', required: false, example: '30' })
+  async lotes(
+    @Query('almacenId') almacenId?: string,
+    @Query('productoId') productoId?: string,
+    @Query('diasProximo') diasProximo?: string,
+  ) {
+    const dias = Number(diasProximo) > 0 ? Number(diasProximo) : 30;
+    return await this.movimientoInventarioService.listarLotes(
+      almacenId,
+      productoId,
+      dias,
+    );
+  }
+
+  @Get('/lotes/exportar')
+  @ApiOperation({
+    summary: 'Descargar stock por lote en CSV (filtros: almacenId, productoId, diasProximo)',
+  })
+  @ApiQuery({ name: 'almacenId', required: false })
+  @ApiQuery({ name: 'productoId', required: false })
+  @ApiQuery({ name: 'diasProximo', required: false, example: '30' })
+  async exportarLotes(
+    @Query('almacenId') almacenId?: string,
+    @Query('productoId') productoId?: string,
+    @Query('diasProximo') diasProximo?: string,
+    @Res() res?: Response,
+  ): Promise<void> {
+    const dias = Number(diasProximo) > 0 ? Number(diasProximo) : 30;
+    const buffer = await this.movimientoInventarioService.exportarLotesCsv(
+      almacenId,
+      productoId,
+      dias,
+    );
+    res!.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res!.setHeader('Content-Disposition', 'attachment; filename="lotes-caducidad.csv"');
+    res!.setHeader('Content-Length', buffer.length);
+    res!.status(HttpStatus.OK).send(buffer);
+  }
+
   @Get('/exportar')
   @ApiOperation({
     summary: 'Descargar kardex completo en CSV (filtros: almacenId, tipo) — hasta 10.000 filas',

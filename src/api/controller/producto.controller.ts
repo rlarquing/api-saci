@@ -19,7 +19,8 @@ import { PermissionGuard, RolGuard } from '../guard';
 import { GenericController } from './generic.controller';
 import { ProductoEntity, UserEntity } from '../../persistence/entity';
 import { ProductoService } from '../../core/service';
-import { CreateProductoDto, FotoProductoDto, ListadoDto, ResponseDto, UpdateProductoDto } from '../../shared/dto';
+import { ProductoMapper } from '../../core/mapper';
+import { CreateProductoDto, FotoProductoDto, ListadoDto, ResponseDto, UpdateProductoDto, CreateVarianteDto, UpdateAtributosVarianteDto } from '../../shared/dto';
 import { Pagination } from '../../shared/pagination';
 import { RolType } from '../../shared/enum';
 import { AppConfig } from '../../app.keys';
@@ -34,6 +35,7 @@ export class ProductoController extends GenericController<ProductoEntity> {
   private key!: string[];
   constructor(
     protected productoService: ProductoService,
+    protected productoMapper: ProductoMapper,
     protected configService: ConfigService,
   ) {
     super(productoService, configService, 'producto');
@@ -45,6 +47,7 @@ export class ProductoController extends GenericController<ProductoEntity> {
       'Unidad',
       'Stock mínimo',
       'Stock seguridad',
+      'Variante',
       'Foto',
     ];
     this.key = [
@@ -55,6 +58,7 @@ export class ProductoController extends GenericController<ProductoEntity> {
       'unidadNombre',
       'stockMinimo',
       'stockSeguridad',
+      'atributosResumen',
       'hasFoto',
     ];
   }
@@ -120,5 +124,45 @@ export class ProductoController extends GenericController<ProductoEntity> {
     @IpAddress() ip: string,
   ): Promise<ResponseDto> {
     return await this.productoService.guardarFoto(user, id, dto.foto, ip);
+  }
+
+  // ================== VARIANTES (backlog P3) ==================
+
+  @Post('/:id/variantes')
+  @Roles(RolType.ADMINISTRADOR, RolType.JEFE_DE_ALMACEN)
+  @ApiOperation({
+    summary: 'Crear variante del producto (SKU nuevo con atributos talla/color…)',
+  })
+  @ApiResponse({ status: 201, description: 'Variante creada', type: ResponseDto })
+  async crearVariante(
+    @GetUser() user: UserEntity,
+    @Param('id') id: string,
+    @Body() dto: CreateVarianteDto,
+    @IpAddress() ip: string,
+  ): Promise<ResponseDto> {
+    return await this.productoService.crearVariante(user, id, dto.atributos, ip);
+  }
+
+  @Get('/:id/variantes')
+  @ApiOperation({ summary: 'Listar variantes activas del producto padre' })
+  @ApiResponse({ status: 200, description: 'Variantes del padre' })
+  async listarVariantes(@Param('id') id: string): Promise<any[]> {
+    const variantes = await this.productoService.listarVariantes(id);
+    return await Promise.all(
+      variantes.map((v) => this.productoMapper.entityToDto(v)),
+    );
+  }
+
+  @Put('/:id/atributos')
+  @Roles(RolType.ADMINISTRADOR, RolType.JEFE_DE_ALMACEN)
+  @ApiOperation({ summary: 'Actualizar atributos de una variante' })
+  @ApiResponse({ status: 200, description: 'Atributos actualizados', type: ResponseDto })
+  async actualizarAtributos(
+    @GetUser() user: UserEntity,
+    @Param('id') id: string,
+    @Body() dto: UpdateAtributosVarianteDto,
+    @IpAddress() ip: string,
+  ): Promise<ResponseDto> {
+    return await this.productoService.actualizarAtributos(user, id, dto.atributos, ip);
   }
 }

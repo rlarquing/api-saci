@@ -42,6 +42,17 @@ export class CreateEntradaDto {
   @IsString()
   @MaxLength(300)
   observaciones?: string;
+
+  @ApiPropertyOptional({ description: 'Lote del movimiento (P3, opcional)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  lote?: string;
+
+  @ApiPropertyOptional({ description: 'Fecha de caducidad del lote (P3, opcional)' })
+  @IsOptional()
+  @IsDateString()
+  fechaCaducidad?: string;
 }
 
 export class CreateSalidaDto extends CreateEntradaDto {}
@@ -76,6 +87,17 @@ export class CreateAjusteDto {
   @IsOptional()
   @IsDateString()
   fecha?: string;
+
+  @ApiPropertyOptional({ description: 'Lote del ajuste (P3, opcional)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  lote?: string;
+
+  @ApiPropertyOptional({ description: 'Fecha de caducidad del lote (P3, opcional)' })
+  @IsOptional()
+  @IsDateString()
+  fechaCaducidad?: string;
 }
 
 /** Payload de TRASLADO entre almacenes: crea el par compensado. */
@@ -108,6 +130,19 @@ export class CreateTrasladoDto {
   @IsOptional()
   @IsDateString()
   fecha?: string;
+
+  @ApiPropertyOptional({
+    description: 'Lote que viaja con la mercancía (P3, opcional)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  lote?: string;
+
+  @ApiPropertyOptional({ description: 'Fecha de caducidad del lote (P3, opcional)' })
+  @IsOptional()
+  @IsDateString()
+  fechaCaducidad?: string;
 }
 
 /** Lectura del kardex. */
@@ -138,4 +173,30 @@ export class ReadMovimientoInventarioDto {
   observaciones?: string;
   @ApiPropertyOptional({ description: 'Signo del ajuste' })
   signoAjuste?: number;
+  @ApiPropertyOptional({ description: 'Lote del movimiento (P3)' })
+  lote?: string;
+  @ApiPropertyOptional({ description: 'Fecha de caducidad del lote (P3)' })
+  fechaCaducidad?: Date;
+}
+
+/** Fila del stock derivado por lote (P3). */
+export class ReadLoteStockDto {
+  @ApiProperty({ description: 'ID del producto' })
+  productoId!: string;
+  @ApiProperty({ description: 'SKU' })
+  productoCodigo!: string;
+  @ApiProperty({ description: 'Nombre del producto' })
+  productoNombre!: string;
+  @ApiProperty({ description: 'Almacén' })
+  almacenNombre!: string;
+  @ApiProperty({ description: 'Lote (null = sin lote)' })
+  lote!: string | null;
+  @ApiProperty({ description: 'Fecha de caducidad (null = sin caducidad)' })
+  fechaCaducidad!: Date | null;
+  @ApiProperty({ description: 'Stock vivo del lote' })
+  stock!: number;
+  @ApiProperty({ description: 'VENCIDO | PROXIMO | OK | SIN_CADUCIDAD' })
+  estado!: 'VENCIDO' | 'PROXIMO' | 'OK' | 'SIN_CADUCIDAD';
+  @ApiProperty({ description: 'Días para vencer (negativo = vencido)' })
+  diasParaVencer!: number | null;
 }

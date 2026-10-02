@@ -18,3 +18,4 @@ export { SyncRelationService } from './sync-relation.service';
 export { ConteoInventarioService } from './conteo-inventario.service';
 export { NivelStockService, UmbralStock } from './nivel-stock.service';
 export { DigestService } from './digest.service';
+export { ProductoUbicacionService } from './producto-ubicacion.service';

@@ -20,6 +20,11 @@ export class DashboardBiDto {
   @ApiProperty({ description: 'Alertas de stock bajo mínimo' })
   alertasBajoMinimo: number;
 
+  @ApiProperty({
+    description: 'Lotes con stock vivo vencidos o por vencer en 30 días (P3)',
+  })
+  lotesEnAlerta: number;
+
   @ApiProperty({ description: 'Stock por almacén' })
   stockPorAlmacen: Array<{ almacenId: string; almacenNombre: string; stock: number }>;
 

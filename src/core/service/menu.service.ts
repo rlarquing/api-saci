@@ -343,6 +343,17 @@ export class MenuService extends GenericService<MenuEntity> {
         roles: [RolType.ADMINISTRADOR, RolType.JEFE_DE_ALMACEN],
       },
       {
+        label: 'Lotes y vencimientos',
+        icon: 'calendar_clock',
+        to: '/admin/lotes',
+        controller: 'movimiento-inventario',
+        roles: [
+          RolType.ADMINISTRADOR,
+          RolType.JEFE_DE_ALMACEN,
+          RolType.OPERARIO,
+        ],
+      },
+      {
         label: 'Etiquetas QR',
         icon: 'qr_code_2',
         to: '/admin/qr',

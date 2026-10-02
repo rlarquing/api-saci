@@ -51,4 +51,12 @@ export class ProductoRepository
   async contarProductos(): Promise<number> {
     return await this.repository.count({ where: { activo: true } as any });
   }
+
+  /** Variantes activas de un producto padre (backlog P3). */
+  async findVariantesDe(padreId: string): Promise<ProductoEntity[]> {
+    return await this.repository.find({
+      where: { productoPadreId: padreId, activo: true } as any,
+      order: { atributosResumen: 'ASC' as any },
+    });
+  }
 }

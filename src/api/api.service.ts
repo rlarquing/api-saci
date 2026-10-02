@@ -17,6 +17,7 @@ import {
   ConteoInventarioController,
   FotoPublicaController,
   NivelStockController,
+  ProductoUbicacionController,
 } from './controller';
 
 export const controller = [
@@ -38,4 +39,5 @@ export const controller = [
   ConteoInventarioController,
   FotoPublicaController,
   NivelStockController,
+  ProductoUbicacionController,
 ];

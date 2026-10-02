@@ -27,11 +27,13 @@ import {
   QrRepository,
   GenericNomencladorRepository,
   RegistroDiarioRepository,
+  ProductoUbicacionRepository,
 } from '../../persistence/repository';
 import { NomencladorTypeEnum, RolType } from '../../shared/enum';
 import { AppConfig } from '../../app.keys';
 import { ResponseDto } from '../../shared/dto';
 import { NotificacionPayload } from '../../shared/dto';
+import { ReadLoteStockDto } from '../../shared/dto';
 import { fechaLegible, toCsvBuffer } from '../../shared/helper/csv.helper';
 
 /**
@@ -60,6 +62,7 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
     private registroDiarioService: RegistroDiarioService,
     private socketService: SocketService,
     private nivelStockService: NivelStockService,
+    private productoUbicacionRepository: ProductoUbicacionRepository,
   ) {
     super(
       configService,
@@ -72,7 +75,29 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
 
   // ================== CONSULTAS ==================
 
-  /** Stock derivado (fuente única de verdad) por producto y/o almacén. */
+  /** Normaliza los datos de lote del payload: lote recortado + caducidad válida. */
+  private normalizarLote(data: any): {
+    lote?: string;
+    fechaCaducidad?: Date;
+  } {
+    const lote = typeof data.lote === 'string' ? data.lote.trim() : '';
+    const resultado: { lote?: string; fechaCaducidad?: Date } = {};
+    if (lote) {
+      resultado.lote = lote.slice(0, 50);
+    }
+    if (data.fechaCaducidad) {
+      const fecha = new Date(data.fechaCaducidad);
+      if (!Number.isNaN(fecha.getTime())) {
+        resultado.fechaCaducidad = fecha;
+      }
+    }
+    return resultado;
+  }
+
+  /**
+   * Stock derivado (fuente única de verdad) por producto y/o almacén,
+   * enriquecido con el bin del producto en ese almacén (backlog P3).
+   */
   async stock(
     productoId?: string,
     almacenId?: string,
@@ -84,12 +109,38 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
       productoCodigo: string;
       almacenNombre: string;
       stock: number;
+      ubicacionNombre?: string | null;
     }>
   > {
-    return await this.movimientoInventarioRepository.calcularStock(
+    const filas = await this.movimientoInventarioRepository.calcularStock(
       productoId,
       almacenId,
     );
+    const resultado: Array<{
+      productoId: string;
+      almacenId: string;
+      productoNombre: string;
+      productoCodigo: string;
+      almacenNombre: string;
+      stock: number;
+      ubicacionNombre?: string | null;
+    }> = filas.map((f) => ({ ...f, ubicacionNombre: null }));
+    // Enriquecer con bins (tolerante a fallos: nunca rompe el stock)
+    try {
+      const bins = await this.productoUbicacionRepository.findByAlmacenes(
+        Array.from(new Set(filas.map((f) => f.almacenId))),
+      );
+      const mapa = new Map(
+        bins.map((b) => [`${b.productoId}|${b.almacenId}`, b.ubicacionNombre]),
+      );
+      for (const fila of resultado) {
+        fila.ubicacionNombre =
+          mapa.get(`${fila.productoId}|${fila.almacenId}`) ?? null;
+      }
+    } catch {
+      // sin bins: la columna sale vacía
+    }
+    return resultado;
   }
 
   /**
@@ -165,6 +216,114 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
     return new Pagination(items, resultado.meta, resultado.links);
   }
 
+  /**
+   * Stock derivado por lote (backlog P3): filas con estado de caducidad.
+   * @param diasProximo ventana (días) para considerar PRÓXIMO a vencer (default 30)
+   */
+  async listarLotes(
+    almacenId?: string,
+    productoId?: string,
+    diasProximo = 30,
+  ): Promise<ReadLoteStockDto[]> {
+    const filas = await this.movimientoInventarioRepository.stockPorLote(
+      productoId,
+      almacenId,
+    );
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    return filas
+      .filter((f) => f.stock > 0)
+      .map((f) => {
+        let estado: 'VENCIDO' | 'PROXIMO' | 'OK' | 'SIN_CADUCIDAD' =
+          'SIN_CADUCIDAD';
+        let diasParaVencer: number | null = null;
+        if (f.fechaCaducidad) {
+          const caduca = new Date(f.fechaCaducidad);
+          caduca.setHours(0, 0, 0, 0);
+          diasParaVencer = Math.round(
+            (caduca.getTime() - hoy.getTime()) / 86400000,
+          );
+          estado =
+            diasParaVencer < 0
+              ? 'VENCIDO'
+              : diasParaVencer <= diasProximo
+                ? 'PROXIMO'
+                : 'OK';
+        }
+        return {
+          productoId: f.productoId,
+          productoCodigo: f.productoCodigo,
+          productoNombre: f.productoNombre,
+          almacenNombre: f.almacenNombre,
+          lote: f.lote,
+          fechaCaducidad: f.fechaCaducidad,
+          stock: f.stock,
+          estado,
+          diasParaVencer,
+        };
+      })
+      .sort((a, b) => {
+        // vencidos primero, luego próximos; sin caducidad al final
+        const peso = (e: string) =>
+          e === 'VENCIDO' ? 0 : e === 'PROXIMO' ? 1 : e === 'OK' ? 2 : 3;
+        return peso(a.estado) - peso(b.estado);
+      });
+  }
+
+  /**
+   * Lotes VENCIDOS o por vencer dentro de la ventana (alerta — backlog P3).
+   * La consume el sync de la APK (dashboard) y el digest diario.
+   * @param almacenIds almacenes concretos; vacío = TODOS los almacenes
+   */
+  async lotesProximosAVencer(
+    almacenIds: string[],
+    diasProximo = 30,
+  ): Promise<ReadLoteStockDto[]> {
+    const todas: ReadLoteStockDto[] = [];
+    if (!almacenIds || almacenIds.length === 0) {
+      const filas = await this.listarLotes(undefined, undefined, diasProximo);
+      todas.push(
+        ...filas.filter(
+          (f) => f.estado === 'VENCIDO' || f.estado === 'PROXIMO',
+        ),
+      );
+      return todas;
+    }
+    for (const almacenId of almacenIds) {
+      const filas = await this.listarLotes(almacenId, undefined, diasProximo);
+      todas.push(...filas.filter((f) => f.estado === 'VENCIDO' || f.estado === 'PROXIMO'));
+    }
+    return todas;
+  }
+
+  /** Exportación CSV del stock por lote (backlog P3). */
+  async exportarLotesCsv(
+    almacenId?: string,
+    productoId?: string,
+    diasProximo = 30,
+  ): Promise<Buffer> {
+    const filas = await this.listarLotes(almacenId, productoId, diasProximo);
+    return toCsvBuffer(
+      ['SKU', 'Producto', 'Almacén', 'Lote', 'Caducidad', 'Días para vencer', 'Estado', 'Stock'],
+      [
+        'productoCodigo',
+        'productoNombre',
+        'almacenNombre',
+        'lote',
+        'fechaCaducidad',
+        'diasParaVencer',
+        'estado',
+        'stock',
+      ],
+      filas.map((f) => ({
+        ...f,
+        fechaCaducidad: f.fechaCaducidad ? fechaLegible(f.fechaCaducidad) : '',
+        diasParaVencer: f.diasParaVencer ?? '',
+      })) as any,
+    );
+  }
+
   // ================== OPERACIONES ==================
 
   /**
@@ -217,6 +376,7 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
       userName: user.userName,
       fecha,
       observaciones: data.observaciones,
+      ...this.normalizarLote(data),
     });
     // 8) Asignar QR (primera vez) — idempotente
     if (qr && qr.estado === 'disponible') {
@@ -325,6 +485,7 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
       fecha,
       observaciones: data.observaciones,
       saldoResultante: stockActual - cantidad,
+      ...this.normalizarLote(data),
     });
     try {
       const creado = await this.movimientoInventarioRepository.create(movimiento);
@@ -418,6 +579,7 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
       fecha,
       observaciones: data.observaciones,
       signoAjuste: signo,
+      ...this.normalizarLote(data),
     });
     try {
       const stockActual = await this.movimientoInventarioRepository.stockDe(
@@ -518,6 +680,7 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
       observaciones: data.observaciones ?? `Traslado a ${destino.nombre}`,
       trasladoId,
       saldoResultante: stockOrigen - cantidad,
+      ...this.normalizarLote(data),
     });
     const salidaCreada =
       await this.movimientoInventarioRepository.create(salida);
@@ -542,6 +705,7 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
         observaciones: data.observaciones ?? `Traslado desde ${origen.nombre}`,
         trasladoId,
         saldoResultante: stockDestino + cantidad,
+        ...this.normalizarLote(data),
       });
       const entradaCreada =
         await this.movimientoInventarioRepository.create(entrada);
@@ -719,16 +883,13 @@ export class MovimientoInventarioService extends GenericService<MovimientoInvent
     );
   }
 
-  /** Exportación CSV del stock derivado por producto/almacén. */
+  /** Exportación CSV del stock derivado por producto/almacén (con bin — P3). */
   async exportarStockCsv(almacenId?: string): Promise<Buffer> {
-    const filas = await this.movimientoInventarioRepository.calcularStock(
-      undefined,
-      almacenId,
-    );
+    const filas = await this.stock(undefined, almacenId);
 
     return toCsvBuffer(
-      ['SKU', 'Producto', 'Almacén', 'Stock'],
-      ['productoCodigo', 'productoNombre', 'almacenNombre', 'stock'],
+      ['SKU', 'Producto', 'Almacén', 'Bin', 'Stock'],
+      ['productoCodigo', 'productoNombre', 'almacenNombre', 'ubicacionNombre', 'stock'],
       filas as any,
     );
   }

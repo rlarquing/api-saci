@@ -69,6 +69,11 @@ export { MovimientoEventPayload } from './movimiento-event.dto';
 export { CreateEntradaDto, CreateSalidaDto, CreateAjusteDto, CreateTrasladoDto, ReadMovimientoInventarioDto } from './movimiento-inventario.dto';
 export { CreateProductoDto } from './create-producto.dto';
 export { UpdateProductoDto } from './update-producto.dto';
+export {
+  AtributoVarianteDto,
+  CreateVarianteDto,
+  UpdateAtributosVarianteDto,
+} from './create-producto.dto';
 export { ReadProductoDto } from './read-producto.dto';
 export { UpdateMultipleProductoDto } from './update-multiple-producto.dto';
 export { ProductoSyncDto } from './producto-sync.dto';
@@ -77,3 +82,14 @@ export { CreateConteoDto, ConteoLineaDto, ReadConteoDto } from './conteo-inventa
 export { FotoProductoDto } from './create-producto.dto';
 export { CreateNivelStockDto, UpdateNivelStockDto, ReadNivelStockDto } from './nivel-stock.dto';
 export { NivelStockSyncDto, NotificacionPayload } from './nivel-stock-sync.dto';
+export {
+  CreateProductoUbicacionDto,
+  UpdateProductoUbicacionDto,
+  ReadProductoUbicacionDto,
+  BinResueltoDto,
+} from './producto-ubicacion.dto';
+export {
+  UbicacionProductoSyncDto,
+  LoteProximoSyncDto,
+} from './ubicacion-producto-sync.dto';
+export { ReadLoteStockDto } from './movimiento-inventario.dto';

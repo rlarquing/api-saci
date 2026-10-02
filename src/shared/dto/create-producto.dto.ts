@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsNumber,
   IsOptional,
   IsString,
@@ -6,8 +7,11 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ArrayMinSize,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateProductoDto {
   @ApiProperty({ description: 'Nombre del producto' })
@@ -62,3 +66,34 @@ export class FotoProductoDto {
   @MaxLength(900000)
   foto!: string;
 }
+
+/** Atributo clave/valor de una variante (talla, color, modelo…). */
+export class AtributoVarianteDto {
+  @ApiProperty({ description: 'Nombre del atributo', example: 'Talla' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(40)
+  clave!: string;
+
+  @ApiProperty({ description: 'Valor del atributo', example: 'M' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(40)
+  valor!: string;
+}
+
+/** Crear una VARIANTE bajo un producto padre (backlog P3). */
+export class CreateVarianteDto {
+  @ApiProperty({
+    description: 'Atributos que distinguen la variante (talla/color…)',
+    type: [AtributoVarianteDto],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => AtributoVarianteDto)
+  atributos!: AtributoVarianteDto[];
+}
+
+/** Actualizar los atributos de una variante existente. */
+export class UpdateAtributosVarianteDto extends CreateVarianteDto {} /** alias semántico */
